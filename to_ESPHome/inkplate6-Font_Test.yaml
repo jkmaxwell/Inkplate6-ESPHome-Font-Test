@@ -1,0 +1,398 @@
+substitutions:
+  # What font shall we use?
+  sub_font_filename: "fonts/hellovetica.ttf"
+
+esphome:
+  name: inkplate
+  platform: ESP32
+  board: esp-wrover-kit
+
+# ================================================================================
+#  Logging
+# ================================================================================
+
+logger:
+  level: DEBUG
+
+# ================================================================================
+#  Network & Connectivity
+# ================================================================================
+
+wifi:
+  ssid: !secret wifi_network_name
+  password: !secret wifi_pass
+
+ota:
+  password: !secret ota_pass
+
+api:
+  password: !secret ota_pass
+
+captive_portal:
+
+# ================================================================================
+#  Hardware
+# ================================================================================
+
+switch:
+  - platform: restart
+    name: "Inkplate Reboot"
+    id: reboot
+
+  - platform: gpio
+    id: battery_read_mosfet
+    pin:
+      mcp23017: mcp23017_hub
+      number: 9
+
+  - platform: template
+    name: "Inkplate Greyscale mode"
+    lambda: return id(inkplate_display).get_greyscale();
+    turn_on_action:
+      - lambda: id(inkplate_display).set_greyscale(true);
+    turn_off_action:
+      - lambda: id(inkplate_display).set_greyscale(false);
+
+  - platform: template
+    name: "Inkplate Partial Updating"
+    lambda: return id(inkplate_display).get_partial_updating();
+    turn_on_action:
+      - lambda: id(inkplate_display).set_partial_updating(true);
+    turn_off_action:
+      - lambda: id(inkplate_display).set_partial_updating(false);
+
+i2c:
+
+mcp23017:
+  - id: mcp23017_hub
+    address: 0x20
+
+# ================================================================================
+#  The rest
+# ================================================================================
+
+sensor:
+  - platform: adc
+    id: battery_voltage
+    update_interval: never
+    attenuation: 11db
+    pin: 35
+  - platform: template
+    name: "Inkplate Battery Voltage"
+    lambda: |-
+      id(battery_read_mosfet).turn_on();
+      delay(1);
+      id(battery_voltage).update();
+      int adc = id(battery_voltage).state;
+      id(battery_read_mosfet).turn_off();
+      return adc;
+    filters:
+      - multiply: 2
+
+binary_sensor:
+  - platform: status
+    name: "Inkplate Status"
+    id: system_status
+
+  - platform: gpio
+    name: "Inkplate Touch Pad 1"
+    pin:
+      mcp23017: mcp23017_hub
+      number: 10
+  - platform: gpio
+    name: "Inkplate Touch Pad 2"
+    pin:
+      mcp23017: mcp23017_hub
+      number: 11
+  - platform: gpio
+    name: "Inkplate Touch Pad 3"
+    pin:
+      mcp23017: mcp23017_hub
+      number: 12
+
+time:
+  - platform: sntp
+    id: esptime
+
+# ================================================================================
+#  Typography
+# ================================================================================
+
+font:
+- file: ${sub_font_filename}
+  id: font5
+  size: 5
+- file: ${sub_font_filename}
+  id: font6
+  size: 6
+- file: ${sub_font_filename}
+  id: font7
+  size: 7
+- file: ${sub_font_filename}
+  id: font8
+  size: 8
+- file: ${sub_font_filename}
+  id: font9
+  size: 9
+- file: ${sub_font_filename}
+  id: font10
+  size: 10
+- file: ${sub_font_filename}
+  id: font11
+  size: 11
+- file: ${sub_font_filename}
+  id: font12
+  size: 12
+- file: ${sub_font_filename}
+  id: font13
+  size: 13
+- file: ${sub_font_filename}
+  id: font14
+  size: 14
+- file: ${sub_font_filename}
+  id: font15
+  size: 15
+- file: ${sub_font_filename}
+  id: font16
+  size: 16
+- file: ${sub_font_filename}
+  id: font17
+  size: 17
+- file: ${sub_font_filename}
+  id: font18
+  size: 18
+- file: ${sub_font_filename}
+  id: font19
+  size: 19
+- file: ${sub_font_filename}
+  id: font20
+  size: 20
+- file: ${sub_font_filename}
+  id: font21
+  size: 21
+- file: ${sub_font_filename}
+  id: font22
+  size: 22
+- file: ${sub_font_filename}
+  id: font23
+  size: 23
+- file: ${sub_font_filename}
+  id: font24
+  size: 24
+- file: ${sub_font_filename}
+  id: font25
+  size: 25
+- file: ${sub_font_filename}
+  id: font26
+  size: 26
+- file: ${sub_font_filename}
+  id: font27
+  size: 27
+- file: ${sub_font_filename}
+  id: font28
+  size: 28
+- file: ${sub_font_filename}
+  id: font29
+  size: 29
+- file: ${sub_font_filename}
+  id: font30
+  size: 30
+- file: ${sub_font_filename}
+  id: font31
+  size: 31
+- file: ${sub_font_filename}
+  id: font32
+  size: 32
+- file: ${sub_font_filename}
+  id: font33
+  size: 33
+- file: ${sub_font_filename}
+  id: font34
+  size: 34
+- file: ${sub_font_filename}
+  id: font35
+  size: 35
+- file: ${sub_font_filename}
+  id: font36
+  size: 36
+- file: ${sub_font_filename}
+  id: font40
+  size: 40
+- file: ${sub_font_filename}
+  id: font48
+  size: 48
+
+# ================================================================================
+#  Color Definitions
+# ================================================================================
+
+color:
+- id: color_black
+  red: 0%
+  green: 0%
+  blue: 0%
+- id: color_gray
+  red: 60%
+  green: 60%
+  blue: 60%
+
+# ================================================================================
+#  Display
+# ================================================================================
+
+display:
+- platform: inkplate6
+  id: inkplate_display
+  greyscale: true
+  partial_updating: false
+  update_interval: 300s
+  rotation: 270°
+
+  ckv_pin: 32
+  sph_pin: 33
+  gmod_pin:
+    mcp23017: mcp23017_hub
+    number: 1
+  gpio0_enable_pin:
+    mcp23017: mcp23017_hub
+    number: 8
+  oe_pin:
+    mcp23017: mcp23017_hub
+    number: 0
+  spv_pin:
+    mcp23017: mcp23017_hub
+    number: 2
+  powerup_pin:
+    mcp23017: mcp23017_hub
+    number: 4
+  wakeup_pin:
+    mcp23017: mcp23017_hub
+    number: 3
+  vcom_pin:
+    mcp23017: mcp23017_hub
+    number: 5
+
+  lambda: |-
+    it.fill(COLOR_ON);
+
+    // draw 10px grid
+    int i = 0;
+    int gridSpacing = 10;
+    int displayHeight = it.get_height();
+    int displayWidth = it.get_width();
+    while (i < (displayHeight/gridSpacing)) {
+      // it.filled_rectangle(0, (gridSpacing*(i+1)), displayWidth, 1, color_gray);
+      i++;
+    }
+    i = 0;
+    while (i < (displayWidth/gridSpacing)) {
+      // it.filled_rectangle((gridSpacing*(i+1)),0, 1, displayHeight, color_gray);
+      i++;
+    }
+
+    int headerOffset = 20;
+
+    it.print(20, headerOffset, id(font20), COLOR_OFF, TextAlign::BOTTOM_LEFT, "hellovetica.ttf");
+
+    int fontSize = 5;
+    int fontOffset = 0;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font5), COLOR_OFF, TextAlign::BOTTOM_LEFT, "5pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font6), COLOR_OFF, TextAlign::BOTTOM_LEFT, "6pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font7), COLOR_OFF, TextAlign::BOTTOM_LEFT, "7pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font8), COLOR_OFF, TextAlign::BOTTOM_LEFT, "8pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font9), COLOR_OFF, TextAlign::BOTTOM_LEFT, "9pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font10), COLOR_OFF, TextAlign::BOTTOM_LEFT, "10pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font11), COLOR_OFF, TextAlign::BOTTOM_LEFT, "11pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font12), COLOR_OFF, TextAlign::BOTTOM_LEFT, "12pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font13), COLOR_OFF, TextAlign::BOTTOM_LEFT, "13pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font14), COLOR_OFF, TextAlign::BOTTOM_LEFT, "14pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font15), COLOR_OFF, TextAlign::BOTTOM_LEFT, "15pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font16), COLOR_OFF, TextAlign::BOTTOM_LEFT, "16pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font17), COLOR_OFF, TextAlign::BOTTOM_LEFT, "17pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font18), COLOR_OFF, TextAlign::BOTTOM_LEFT, "18pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font19), COLOR_OFF, TextAlign::BOTTOM_LEFT, "19pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font20), COLOR_OFF, TextAlign::BOTTOM_LEFT, "20pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font21), COLOR_OFF, TextAlign::BOTTOM_LEFT, "21pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font22), COLOR_OFF, TextAlign::BOTTOM_LEFT, "22pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font23), COLOR_OFF, TextAlign::BOTTOM_LEFT, "23pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font24), COLOR_OFF, TextAlign::BOTTOM_LEFT, "24pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font25), COLOR_OFF, TextAlign::BOTTOM_LEFT, "25pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font26), COLOR_OFF, TextAlign::BOTTOM_LEFT, "26pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font27), COLOR_OFF, TextAlign::BOTTOM_LEFT, "27pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font28), COLOR_OFF, TextAlign::BOTTOM_LEFT, "28pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font29), COLOR_OFF, TextAlign::BOTTOM_LEFT, "29pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font30), COLOR_OFF, TextAlign::BOTTOM_LEFT, "30pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font31), COLOR_OFF, TextAlign::BOTTOM_LEFT, "31pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font32), COLOR_OFF, TextAlign::BOTTOM_LEFT, "32pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font33), COLOR_OFF, TextAlign::BOTTOM_LEFT, "33pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font34), COLOR_OFF, TextAlign::BOTTOM_LEFT, "34pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font35), COLOR_OFF, TextAlign::BOTTOM_LEFT, "35pt ABCghijxX 12345");
+    fontSize++;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font36), COLOR_OFF, TextAlign::BOTTOM_LEFT, "36pt ABCghijxX 12345");
+    fontSize = 40;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font40), COLOR_OFF, TextAlign::BOTTOM_LEFT, "40pt ABCghijxX 12345");
+    fontSize = 48;
+    fontOffset += fontSize;
+    it.print(20, headerOffset + 4 + fontOffset + 1, id(font48), COLOR_OFF, TextAlign::BOTTOM_LEFT, "48pt ABCghijxX 12345");
