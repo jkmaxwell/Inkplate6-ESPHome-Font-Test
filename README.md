@@ -9,3 +9,7 @@
 - [Inkplate](https://inkplate.io)
 - [ESPHome](https://esphome.io/)
 - [ESPHome for Inkplate](https://github.com/jesserockz/esphome-inkplate)
+- A secrets.yaml file in your ESPHome configuration (click the upper right of your ESPHome screen in Hassio) with:
+    - wifi_network_name
+    - wifi_pass
+    - ota_pass (i use the same for ota & api)
